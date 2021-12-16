@@ -24,7 +24,6 @@ SOFTWARE.
 import dbus
 import json
 import subprocess
-import sys
 import os
 import logging
 
@@ -34,6 +33,8 @@ from service import Application, Service, Characteristic, Descriptor
 GATT_CHRC_IFACE = "org.bluez.GattCharacteristic1"
 NOTIFY_TIMEOUT = 5000
 
+class BleApplication(Application):
+    pass
 
 class JsonAdvertisement(Advertisement):
     def __init__(self, index):
@@ -270,20 +271,3 @@ class GetIPDescriptor(Descriptor):
             value.append(dbus.Byte(c.encode()))
 
         return value
-
-
-app = Application()
-
-# logging.basicConfig(level=logging.DEBUG,
-#                    filename="ble_server.log")
-
-app.add_service(JsonService(0))
-app.register()
-
-adv = JsonAdvertisement(0)
-adv.register()
-
-try:
-    app.run()
-except KeyboardInterrupt:
-    app.quit()

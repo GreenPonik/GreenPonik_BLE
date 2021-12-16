@@ -21,11 +21,6 @@ SOFTWARE.
 
 import dbus
 
-try:
-    from gi.repository import GObject
-except ImportError:
-    import gobject as GObject
-
 BLUEZ_SERVICE_NAME = "org.bluez"
 LE_ADVERTISING_MANAGER_IFACE = "org.bluez.LEAdvertisingManager1"
 DBUS_OM_IFACE = "org.freedesktop.DBus.ObjectManager"
