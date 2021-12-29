@@ -296,7 +296,7 @@ class CharacteristicUserDescriptionDescriptor(Descriptor):
 
     def __init__(self, bus, index, characteristic):
         self.writable = "writable-auxiliaries" in characteristic.flags
-        self.value = array.array("B", b"This is a characteristic for testing")
+        self.value = self.array.array("B", b"This is a characteristic for testing")
         self.value = self.value.tolist()
         Descriptor.__init__(
             self, bus, index, self.CUD_UUID, ["read", "write"], characteristic

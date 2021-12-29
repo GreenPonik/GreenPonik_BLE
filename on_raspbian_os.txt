@@ -1,6 +1,0 @@
-apt-get dbus supervisor
-supervisor.conf
-path of supervisor.conf ???
-supervisor reread
-supervisor update
-supervisor start all
