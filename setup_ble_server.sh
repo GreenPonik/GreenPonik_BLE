@@ -30,7 +30,7 @@ _welcome() {
     echo -e "                                                    version ${VERSION}                                                                 "
     echo -e " By https://github.com/GreenPonik/GreenPonik_BLE                                                                                       "
     echo -e "${GREEN}                                                                                                                               "
-    echo -e "Download dependencies and tool to start and manage the BLE server on Raspberry Pi\n\n                                                                      "
+    echo -e "Download dependencies and tool to start and manage the BLE server on Raspberry Pi\n\n                                                  "
 }
 
 _logger() {
@@ -44,10 +44,27 @@ install_ble_server() {
     cd /home/greenponik
     echo "installing depedencies"
 
-    apt-get install dbus
-    apt-get install supervisor
+    REQUIRED_PKG="dbus"
+    PKG_OK=$(dpkg-query -W --showformat='${Status}\n' $REQUIRED_PKG|grep "install ok installed")
+    echo Checking for $REQUIRED_PKG: $PKG_OK
+    if [ "" = "$PKG_OK" ]; then
+        echo "No $REQUIRED_PKG. Setting up $REQUIRED_PKG."
+        apt-get --yes install $REQUIRED_PKG
+    else
+        echo "$REQUIRED_PKG already install"
+    fi
+    REQUIRED_PKG="supervisor"
+    PKG_OK=$(dpkg-query -W --showformat='${Status}\n' $REQUIRED_PKG|grep "install ok installed")
+    echo Checking for $REQUIRED_PKG: $PKG_OK
+    if [ "" = "$PKG_OK" ]; then
+        echo "No $REQUIRED_PKG. Setting up $REQUIRED_PKG."
+        apt-get --yes install $REQUIRED_PKG
+    else
+        echo "$REQUIRED_PKG already install"
+    fi
     wget https://raw.githubusercontent.com/GreenPonik/GreenPonik_BLE/main/supervisor_ble_server.conf
     mv supervisor_ble_server.conf /etc/supervisor/conf.d/supervisor_ble_server.conf
+    supervisorctl stop all
     supervisorctl reread
     supervisorctl update
     supervisorctl start all

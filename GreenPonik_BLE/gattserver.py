@@ -27,14 +27,16 @@ import subprocess
 import os
 import logging
 
-from advertisement import Advertisement
-from service import Application, Service, Characteristic, Descriptor
+from GreenPonik_BLE.advertisement import Advertisement
+from GreenPonik_BLE.service import Application, Service, Characteristic, Descriptor
 
 GATT_CHRC_IFACE = "org.bluez.GattCharacteristic1"
 NOTIFY_TIMEOUT = 5000
 
+
 class BleApplication(Application):
     pass
+
 
 class JsonAdvertisement(Advertisement):
     def __init__(self, index):
@@ -46,6 +48,7 @@ class JsonAdvertisement(Advertisement):
 
 class JsonService(Service):
     JSON_SVC_UUID = "00000001-9e3e-4800-9fa6-fd34f6571ad7"
+    logging.basicConfig(level=logging.DEBUG, filename="/var/log/ble_server.log")
 
     def __init__(self, index):
         self.ssid = "ssid_init"
@@ -131,11 +134,11 @@ class JsonCharacteristic(Characteristic):
 
     def __init__(self, service):
         Characteristic.__init__(
-            self, self.JSON_CHARACTERISTIC_UUID, ["read", "write"], service
+            self, self.JSON_CHARACTERISTIC_UUID, ["read", "write-without-response"], service
         )
         self.add_descriptor(JSONDescriptor(self))
 
-    def WriteValue(self, value, options):
+    def WriteValue(self, value, options=None):
         val = "".join(chr(i) for i in value)
         jsonval = json.loads(val)
         self.service.set_ssid(jsonval["ssid"])
@@ -144,12 +147,12 @@ class JsonCharacteristic(Characteristic):
         self.service.set_wifichange(False)
 
         print("Ready to change the wifi configuration")
-        # logging.debug("ssid : %s , pass : %s , country : %s", self.service.get_ssid(), self.service.get_pwd(), self.service.get_country())
+        logging.debug("ssid : %s , pass : %s , country : %s", self.service.get_ssid(), self.service.get_pwd(), self.service.get_country())
         self.service.sta_configurator(
             self.service.get_ssid(), self.service.get_pwd(), self.service.get_country()
         )
 
-    def ReadValue(self, options):
+    def ReadValue(self, options=None):
         value = []
 
         ssid = self.service.get_ssid()
@@ -179,8 +182,8 @@ class GetIPCharacteristic(Characteristic):
         value = []
         ipaddress = os.popen(
             "ifconfig wlan0 \
-                            | grep '\<inet\>' \
-                            | awk -F \" \" '{print $2}'"
+            | grep '\<inet\>' \
+            | awk -F \" \" '{print $2}'"
         ).read()
         ssid = (
             os.popen(
@@ -194,7 +197,7 @@ class GetIPCharacteristic(Characteristic):
         )
 
         ssidsend = self.service.get_ssid()
-        # logging.debug("ssidsend : %s ssidRPI : %s", ssidsend, ssid)
+        logging.debug("ssidsend : %s ssidRPI : %s", ssidsend, ssid)
         if (ssid == ssidsend) and ipaddress != "":
             self.service.set_wifichange(True)
         else:
@@ -233,7 +236,7 @@ class GetIPCharacteristic(Characteristic):
     def StopNotify(self):
         self.notifying = False
 
-    def ReadValue(self, options):
+    def ReadValue(self, options=None):
         value = self.get_ip()
 
         return value
@@ -246,7 +249,7 @@ class JSONDescriptor(Descriptor):
     def __init__(self, characteristic):
         Descriptor.__init__(self, self.JSON_DESCRIPTOR_UUID, ["read"], characteristic)
 
-    def ReadValue(self, options):
+    def ReadValue(self, options=None):
         value = []
         desc = self.JSON_DESCRIPTOR_VALUE
 
@@ -263,7 +266,7 @@ class GetIPDescriptor(Descriptor):
     def __init__(self, characteristic):
         Descriptor.__init__(self, self.GETIP_DESCRIPTOR_UUID, ["read"], characteristic)
 
-    def ReadValue(self, options):
+    def ReadValue(self, options=None):
         value = []
         desc = self.GETIP_DESCRIPTOR_VALUE
 
