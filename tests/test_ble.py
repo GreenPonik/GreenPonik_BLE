@@ -1,12 +1,21 @@
-import unittest
-from unittest.mock import patch
 import dbus
 import sys
 import os
+
 here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 parent = os.path.abspath(os.path.join(here, os.pardir))
 sys.path.insert(0, parent)
-from GreenPonik_BLE.gattserver import JsonService, JsonCharacteristic, GetIPCharacteristic
+
+from GreenPonik_BLE.gattserver import (
+    JsonService,
+    JsonCharacteristic,
+    GetIPCharacteristic,
+)
+
+# from GreenPonik_BLE.gattserver.GetIPCharacteristic import _get_ifconfig, _get_iwconfig
+
+import unittest
+from unittest.mock import patch, MagicMock
 
 
 class TestBleServer(unittest.TestCase):
@@ -14,7 +23,7 @@ class TestBleServer(unittest.TestCase):
         "ssid": "ssid_init",
         "pwd": "pwd_init",
         "country": "country_init",
-        "wifichange": True
+        "wifichange": True,
     }
 
     @patch("GreenPonik_BLE.bletools.BleTools.get_bus")
@@ -45,41 +54,134 @@ class TestBleServer(unittest.TestCase):
         service.country = self.fixtures["country"]
         jsonc = JsonCharacteristic(service)
         result = jsonc.ReadValue()
-        expected = [dbus.Byte(123), dbus.Byte(34), dbus.Byte(115), dbus.Byte(115), dbus.Byte(105), dbus.Byte(100), dbus.Byte(34), dbus.Byte(58), dbus.Byte(32), dbus.Byte(115), dbus.Byte(115), dbus.Byte(105), dbus.Byte(100), dbus.Byte(95), dbus.Byte(105), dbus.Byte(110), dbus.Byte(105), dbus.Byte(116), dbus.Byte(44), dbus.Byte(34), dbus.Byte(112), dbus.Byte(119), dbus.Byte(100), dbus.Byte(34), dbus.Byte(58), dbus.Byte(32), dbus.Byte(112), dbus.Byte(119), dbus.Byte(100), dbus.Byte(95), dbus.Byte(105), dbus.Byte(110), dbus.Byte(105), dbus.Byte(116), dbus.Byte(44), dbus.Byte(34), dbus.Byte(99), dbus.Byte(111), dbus.Byte(117), dbus.Byte(110), dbus.Byte(116), dbus.Byte(114), dbus.Byte(121), dbus.Byte(34), dbus.Byte(58), dbus.Byte(32), dbus.Byte(99), dbus.Byte(111), dbus.Byte(117), dbus.Byte(110), dbus.Byte(116), dbus.Byte(114), dbus.Byte(121), dbus.Byte(95), dbus.Byte(105), dbus.Byte(110), dbus.Byte(105), dbus.Byte(116), dbus.Byte(125)]
+        # TODO use decoded dbusByte result instead of using expected dbus.byte array
+        # for now it isn't human unreadable
+        expected = [
+            dbus.Byte(123),
+            dbus.Byte(34),
+            dbus.Byte(115),
+            dbus.Byte(115),
+            dbus.Byte(105),
+            dbus.Byte(100),
+            dbus.Byte(34),
+            dbus.Byte(58),
+            dbus.Byte(32),
+            dbus.Byte(115),
+            dbus.Byte(115),
+            dbus.Byte(105),
+            dbus.Byte(100),
+            dbus.Byte(95),
+            dbus.Byte(105),
+            dbus.Byte(110),
+            dbus.Byte(105),
+            dbus.Byte(116),
+            dbus.Byte(44),
+            dbus.Byte(34),
+            dbus.Byte(112),
+            dbus.Byte(119),
+            dbus.Byte(100),
+            dbus.Byte(34),
+            dbus.Byte(58),
+            dbus.Byte(32),
+            dbus.Byte(112),
+            dbus.Byte(119),
+            dbus.Byte(100),
+            dbus.Byte(95),
+            dbus.Byte(105),
+            dbus.Byte(110),
+            dbus.Byte(105),
+            dbus.Byte(116),
+            dbus.Byte(44),
+            dbus.Byte(34),
+            dbus.Byte(99),
+            dbus.Byte(111),
+            dbus.Byte(117),
+            dbus.Byte(110),
+            dbus.Byte(116),
+            dbus.Byte(114),
+            dbus.Byte(121),
+            dbus.Byte(34),
+            dbus.Byte(58),
+            dbus.Byte(32),
+            dbus.Byte(99),
+            dbus.Byte(111),
+            dbus.Byte(117),
+            dbus.Byte(110),
+            dbus.Byte(116),
+            dbus.Byte(114),
+            dbus.Byte(121),
+            dbus.Byte(95),
+            dbus.Byte(105),
+            dbus.Byte(110),
+            dbus.Byte(105),
+            dbus.Byte(116),
+            dbus.Byte(125),
+        ]
         self.assertEqual(result, expected)
 
-    # @patch("GreenPonik_BLE.gattserver.JsonService")
-    # @patch("GreenPonik_BLE.gattserver.GetIPCharacteristic")
     @patch("GreenPonik_BLE.bletools.BleTools.get_bus")
-    def test_getip(self, mock_getbus):
-        service = JsonService(0)
+    @patch.object(GetIPCharacteristic, "_get_ifconfig")
+    @patch.object(GetIPCharacteristic, "_get_iwconfig")
+    def test_getip(self, mock_iwconfig, mock_ifconfig, mock_getbus):
         i = mock_getbus()
         i.return_value = True
+
+        service = JsonService(0)
         service.ssid = self.fixtures["ssid"]
         service.pwd = self.fixtures["pwd"]
         service.country = self.fixtures["country"]
+        ip_address = "192.168.0.1"
+
+        expected_data = (
+            '{"ssid": "%s","ipadresse": "%s","newwifiisok": "%s","hname": "%s"}'
+            % (
+                service.ssid,
+                ip_address,
+                True,
+                os.uname().nodename,
+            )
+        )
+
+        mock_ifconfig.return_value = ip_address
+        mock_iwconfig.return_value = service.ssid
+
+        result = None
         getipc = GetIPCharacteristic(service)
         result = getipc.get_ip()
-        print("%s" % result)
-        expected = [dbus.Byte(123), dbus.Byte(34), dbus.Byte(115), dbus.Byte(115), dbus.Byte(105), dbus.Byte(100), dbus.Byte(34), dbus.Byte(58), dbus.Byte(32), dbus.Byte(34), dbus.Byte(34), dbus.Byte(44), dbus.Byte(34), dbus.Byte(105), dbus.Byte(112), dbus.Byte(97), dbus.Byte(100), dbus.Byte(114), dbus.Byte(101), dbus.Byte(115), dbus.Byte(115), dbus.Byte(101), dbus.Byte(34), dbus.Byte(58), dbus.Byte(32), dbus.Byte(34), dbus.Byte(34), dbus.Byte(44), dbus.Byte(34), dbus.Byte(110), dbus.Byte(101), dbus.Byte(119), dbus.Byte(119), dbus.Byte(105), dbus.Byte(102), dbus.Byte(105), dbus.Byte(105), dbus.Byte(115), dbus.Byte(111), dbus.Byte(107), dbus.Byte(34), dbus.Byte(58), dbus.Byte(32), dbus.Byte(34), dbus.Byte(70), dbus.Byte(97), dbus.Byte(108), dbus.Byte(115), dbus.Byte(101), dbus.Byte(34), dbus.Byte(44), dbus.Byte(34), dbus.Byte(104), dbus.Byte(110), dbus.Byte(97), dbus.Byte(109), dbus.Byte(101), dbus.Byte(34), dbus.Byte(58), dbus.Byte(32), dbus.Byte(34), dbus.Byte(76), dbus.Byte(65), dbus.Byte(80), dbus.Byte(84), dbus.Byte(79), dbus.Byte(80), dbus.Byte(45), dbus.Byte(80), dbus.Byte(65), dbus.Byte(34), dbus.Byte(125)]
-        self.assertEqual(result, expected)
 
-    # @patch("GreenPonik_BLE.gattserver.JsonService")
-    # @patch("GreenPonik_BLE.gattserver.GetIPCharacteristic")
+        decoded_result_from_dbus_byte = []
+        for r in result:
+            decoded_result_from_dbus_byte.append(" ".join(str(r)))
+        decoded_result = "".join(s for s in decoded_result_from_dbus_byte)
+
+        self.assertIsNotNone(decoded_result)
+        self.assertEqual(decoded_result, expected_data)
+
     @patch("GreenPonik_BLE.bletools.BleTools.get_bus")
-    def test_set_ip_callback(self, mock_getbus):
+    @patch.object(GetIPCharacteristic, "_get_ifconfig")
+    @patch.object(GetIPCharacteristic, "_get_iwconfig")
+    def test_set_ip_callback(self, mock_iwconfig, mock_ifconfig, mock_getbus):
         i = mock_getbus()
         i.return_value = True
+
         service = JsonService(0)
         service.ssid = self.fixtures["ssid"]
         service.pwd = self.fixtures["pwd"]
         service.country = self.fixtures["country"]
+        ip_address = "192.168.0.1"
+
+        mock_ifconfig.return_value = ip_address
+        mock_iwconfig.return_value = service.ssid
+
+        result = None
         getipc = GetIPCharacteristic(service)
         getipc.StartNotify()
         result = getipc.set_ip_callback()
+        self.assertIsNotNone(result)
         self.assertTrue(result)
         getipc.StopNotify()
         result = getipc.set_ip_callback()
+        self.assertIsNotNone(result)
         self.assertFalse(result)
 
 

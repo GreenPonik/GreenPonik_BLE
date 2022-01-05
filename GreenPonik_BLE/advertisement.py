@@ -25,6 +25,8 @@ import dbus.service
 
 from GreenPonik_BLE.bletools import BleTools
 from GreenPonik_BLE.service import InvalidArgsException
+from GreenPonik_BLE.service import logger
+import logging
 
 BLUEZ_SERVICE_NAME = "org.bluez"
 LE_ADVERTISING_MANAGER_IFACE = "org.bluez.LEAdvertisingManager1"
@@ -34,6 +36,14 @@ LE_ADVERTISEMENT_IFACE = "org.bluez.LEAdvertisement1"
 
 
 class Advertisement(dbus.service.Object):
+    """[summary]
+
+    :param dbus: [description]
+    :type dbus: [type]
+    :raises InvalidArgsException: [description]
+    :return: [description]
+    :rtype: [type]
+    """
     PATH_BASE = "/org/bluez/example/advertisement"
 
     def __init__(self, index, advertising_type):
@@ -46,9 +56,15 @@ class Advertisement(dbus.service.Object):
         self.manufacturer_data = None
         self.service_data = None
         self.include_tx_power = None
+        self.log = logging.getLogger('classLogger')
         dbus.service.Object.__init__(self, self.bus, self.path)
 
     def get_properties(self):
+        """[summary]
+
+        :return: [description]
+        :rtype: [type]
+        """
         properties = dict()
         properties["Type"] = self.ad_type
 
@@ -77,15 +93,33 @@ class Advertisement(dbus.service.Object):
         return {LE_ADVERTISEMENT_IFACE: properties}
 
     def get_path(self):
+        """[summary]
+
+        :return: [description]
+        :rtype: [type]
+        """
         return dbus.ObjectPath(self.path)
 
     def add_local_name(self, name):
+        """[summary]
+
+        :param name: [description]
+        :type name: [type]
+        """
         if not self.local_name:
             self.local_name = ""
         self.local_name = dbus.String(name)
 
     @dbus.service.method(DBUS_PROP_IFACE, in_signature="s", out_signature="a{sv}")
     def GetAll(self, interface):
+        """[summary]
+
+        :param interface: [description]
+        :type interface: [type]
+        :raises InvalidArgsException: [description]
+        :return: [description]
+        :rtype: [type]
+        """
         if interface != LE_ADVERTISEMENT_IFACE:
             raise InvalidArgsException()
 
@@ -93,15 +127,23 @@ class Advertisement(dbus.service.Object):
 
     @dbus.service.method(LE_ADVERTISEMENT_IFACE, in_signature="", out_signature="")
     def Release(self):
+        """[summary]
+        """
         print("%s: Released!" % self.path)
 
     def register_ad_callback(self):
+        """[summary]
+        """
         print("GATT advertisement registered")
 
     def register_ad_error_callback(self):
+        """[summary]
+        """
         print("Failed to register GATT advertisement")
 
     def register(self):
+        """[summary]
+        """
         bus = BleTools.get_bus()
         adapter = BleTools.find_adapter(bus)
 

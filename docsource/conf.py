@@ -15,13 +15,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../"))
 
-import pathlib
-
-here = pathlib.Path(__file__).parent.resolve()
-about = {}
-with open(os.path.join(here, "../version.py")) as f:
-    exec(f.read(), about)
-
+import version
 
 # -- Project information -----------------------------------------------------
 
@@ -30,7 +24,7 @@ copyright = '2021, GreenPonik'
 author = 'GreenPonik'
 
 # The full version, including alpha/beta/rc tags
-release = about["__version__"]
+release = version.__version__
 
 
 # -- General configuration ---------------------------------------------------

@@ -27,14 +27,33 @@ DBUS_OM_IFACE = "org.freedesktop.DBus.ObjectManager"
 
 
 class BleTools(object):
+    """[summary]
+
+    :param object: [description]
+    :type object: [type]
+    :return: [description]
+    :rtype: [type]
+    """
     @classmethod
     def get_bus(self):
+        """[summary]
+
+        :return: [description]
+        :rtype: [type]
+        """
         bus = dbus.SystemBus()
 
         return bus
 
     @classmethod
     def find_adapter(self, bus):
+        """[summary]
+
+        :param bus: [description]
+        :type bus: [type]
+        :return: [description]
+        :rtype: [type]
+        """
         remote_om = dbus.Interface(
             bus.get_object(BLUEZ_SERVICE_NAME, "/"), DBUS_OM_IFACE
         )

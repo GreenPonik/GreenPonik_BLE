@@ -8,9 +8,13 @@ Welcome to GreenPonik_BLE's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
+.. mdinclude:: ../README.md
 
+.. toctree::
+   :maxdepth: 2
+   
+   modules
 
 Indices and tables
 ==================

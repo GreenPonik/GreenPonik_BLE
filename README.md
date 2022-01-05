@@ -12,14 +12,14 @@
 
 # GreenPonik_BLE
 
-## A python3 project to use Bluetooth BLE on raspberry pi.<br>
+## A python3 project to use Bluetooth BLE on raspberry pi
 
-## ! Only tested on Raspberry Pi 3 A+ !<br>
+## ! Only tested on Raspberry Pi 3 A+
 
 # Table of Contents
 
 - [Installation](#installation)
-- [Examples](#examples)
+- [Examples](#example)
 - [Credits](#credits)
 
 ## Installation
@@ -30,9 +30,52 @@
 sudo apt-get install dbus supervisor
 ```
 
+### Development / Tests needs
+
+```shell
+sudo apt-get update && sudo apt-get install -y \
+python3-gi-cairo \
+python3-dbus \
+python3-gi \
+python3-gi-cairo \
+python-gobject \
+libdbus-1-dev libdbus-glib-1-dev
+
+python3 -m venv venv
+```
+
+on linux
+
+```shell
+source venv/bin/activate
+```
+
+or on windows
+
+```shell
+venv/Scripts/activate
+```
+
+on CI linux runner
+
+```shell
+pip3 install dbus-python pycairo PyGObject
+```
+
+```shell
+
+pip install -r requirements.txt
+```
+
 ### Script to install
 
-## Examples
+```shell
+sudo bash setup_ble_server.sh
+```
+
+## Example
+
+[here the example of how to implement the BLE server](example/main.py)
 
 ## Credits
 

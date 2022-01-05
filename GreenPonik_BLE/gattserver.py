@@ -25,7 +25,6 @@ import dbus
 import json
 import subprocess
 import os
-import logging
 
 from GreenPonik_BLE.advertisement import Advertisement
 from GreenPonik_BLE.service import Application, Service, Characteristic, Descriptor
@@ -34,11 +33,29 @@ GATT_CHRC_IFACE = "org.bluez.GattCharacteristic1"
 NOTIFY_TIMEOUT = 5000
 
 
+import platform
+from adafruit_platformdetect import Detector
+detector = Detector()
+is_rpi3aplus = "armv7l" == platform.machine() and detector.board.RASPBERRY_PI_3A_PLUS
+
+
 class BleApplication(Application):
+    """[summary]
+
+    :param Application: [description]
+    :type Application: [type]
+    """
+
     pass
 
 
 class JsonAdvertisement(Advertisement):
+    """[summary]
+
+    :param Advertisement: [description]
+    :type Advertisement: [type]
+    """
+
     def __init__(self, index):
         Advertisement.__init__(self, index, "peripheral")
         hname = os.uname()
@@ -47,47 +64,104 @@ class JsonAdvertisement(Advertisement):
 
 
 class JsonService(Service):
+    """[summary]
+
+    :param Service: [description]
+    :type Service: [type]
+    :return: [description]
+    :rtype: [type]
+    """
+
     JSON_SVC_UUID = "00000001-9e3e-4800-9fa6-fd34f6571ad7"
-    logging.basicConfig(level=logging.DEBUG, filename="/var/log/ble_server.log")
 
     def __init__(self, index):
         self.ssid = "ssid_init"
         self.pwd = "pwd_init"
         self.country = "country_init"
         self.wifichange = False
-
         Service.__init__(self, index, self.JSON_SVC_UUID, True)
         self.add_characteristic(JsonCharacteristic(self))
         self.add_characteristic(GetIPCharacteristic(self))
 
     def set_ssid(self, ssid):
+        """[summary]
+
+        :param ssid: [description]
+        :type ssid: [type]
+        """
         self.ssid = ssid
 
     def get_ssid(self):
+        """[summary]
+
+        :return: [description]
+        :rtype: [type]
+        """
         return self.ssid
 
     def set_pwd(self, pwd):
+        """[summary]
+
+        :param pwd: [description]
+        :type pwd: [type]
+        """
         self.pwd = pwd
 
     def get_pwd(self):
+        """[summary]
+
+        :return: [description]
+        :rtype: [type]
+        """
         return self.pwd
 
     def set_country(self, country):
+        """[summary]
+
+        :param country: [description]
+        :type country: [type]
+        """
         self.country = country
 
     def get_country(self):
+        """[summary]
+
+        :return: [description]
+        :rtype: [type]
+        """
         return self.country
 
     def set_wifichange(self, wifichange):
+        """[summary]
+
+        :param wifichange: [description]
+        :type wifichange: [type]
+        """
+
         self.wifichange = wifichange
 
     def get_wifichange(self):
+        """[summary]
+
+        :return: [description]
+        :rtype: [type]
+        """
         return self.wifichange
 
     def sta_configurator(self, ssid, passphrase, country_code):
-        """
-        @brief
-        wifi sta configurator
+        """[summary]
+
+        :param ssid: [description]
+        :type ssid: [type]
+
+        :param passphrase: [description]
+        :type passphrase: [type]
+
+        :param country_code: [description]
+        :type country_code: [type]
+
+        :return: [description]
+        :rtype: [type]
         """
         print("Hello sta_configurator")
         try:
@@ -110,7 +184,7 @@ class JsonService(Service):
             print("first try")
             try:
                 ret = subprocess.check_output(" ".join(cmd), shell=True).decode("utf-8")
-                logging.debug("return of subprocess {}".format(ret))
+                self.log.debug("return of subprocess {}".format(ret))
                 r = {
                     "ssid": ssid,
                     "passphrase": passphrase,
@@ -119,14 +193,14 @@ class JsonService(Service):
                 print("second try")
             except Exception as e:
                 print("first except")
-                logging.error("error subprocess {}".format(e))
+                self.log.error("error subprocess {}".format(e))
                 r = None
                 pass
-            logging.debug("sta_configurator returns: {}".format(r))
+            self.log.debug("sta_configurator returns: {}".format(r))
             return r
         except Exception as e:
             print("second except")
-            logging.error("sta configurator failed {}".format(e))
+            self.log.error("sta configurator failed {}".format(e))
 
 
 class JsonCharacteristic(Characteristic):
@@ -134,11 +208,21 @@ class JsonCharacteristic(Characteristic):
 
     def __init__(self, service):
         Characteristic.__init__(
-            self, self.JSON_CHARACTERISTIC_UUID, ["read", "write-without-response"], service
+            self,
+            self.JSON_CHARACTERISTIC_UUID,
+            ["read", "write-without-response"],
+            service,
         )
         self.add_descriptor(JSONDescriptor(self))
 
     def WriteValue(self, value, options=None):
+        """[summary]
+
+        :param value: [description]
+        :type value: [type]
+        :param options: [description], defaults to None
+        :type options: [type], optional
+        """
         val = "".join(chr(i) for i in value)
         jsonval = json.loads(val)
         self.service.set_ssid(jsonval["ssid"])
@@ -147,12 +231,24 @@ class JsonCharacteristic(Characteristic):
         self.service.set_wifichange(False)
 
         print("Ready to change the wifi configuration")
-        logging.debug("ssid : %s , pass : %s , country : %s", self.service.get_ssid(), self.service.get_pwd(), self.service.get_country())
+        self.log.debug(
+            "ssid : %s , pass : %s , country : %s",
+            self.service.get_ssid(),
+            self.service.get_pwd(),
+            self.service.get_country(),
+        )
         self.service.sta_configurator(
             self.service.get_ssid(), self.service.get_pwd(), self.service.get_country()
         )
 
     def ReadValue(self, options=None):
+        """[summary]
+
+        :param options: [description], defaults to None
+        :type options: [type], optional
+        :return: [description]
+        :rtype: [type]
+        """
         value = []
 
         ssid = self.service.get_ssid()
@@ -163,11 +259,18 @@ class JsonCharacteristic(Characteristic):
         for c in data:
             value.append(dbus.Byte(c.encode()))
 
-        print(value)
         return value
 
 
 class GetIPCharacteristic(Characteristic):
+    """[summary]
+
+    :param Characteristic: [description]
+    :type Characteristic: [type]
+    :return: [description]
+    :rtype: [type]
+    """
+
     GETIP_CHARACTERISTIC_UUID = "00000003-9e3e-4800-9fa6-fd34f6571ad7"
 
     def __init__(self, service):
@@ -178,26 +281,51 @@ class GetIPCharacteristic(Characteristic):
         )
         self.add_descriptor(GetIPDescriptor(self))
 
-    def get_ip(self):
-        value = []
-        ipaddress = os.popen(
-            "ifconfig wlan0 \
-            | grep '\<inet\>' \
-            | awk -F \" \" '{print $2}'"
-        ).read()
-        ssid = (
-            os.popen(
-                "iwconfig wlan0 \
-                        | grep 'ESSID' \
-                        | awk '{print $4}' \
-                        | awk -F\\\" '{print $2}'"
-            )
-            .read()
-            .rstrip("\n")
-        )
+    def _get_ifconfig(self):
+        ret = None
+        try:
+            if is_rpi3aplus:
+                cmd = os.popen(
+                    r'ifconfig wlan0 \
+                    | grep "\<inet\>" \
+                    | awk -F \" \" "{print $2}"'
+                )
+                if None is not cmd:
+                    ret = cmd.read()
 
+        except Exception as e:
+            self.log.error("{}".format(e))
+        return ret
+
+    def _get_iwconfig(self):
+        ret = None
+        try:
+            if is_rpi3aplus:
+                cmd = os.popen(
+                    r'iwconfig wlan0 \
+                            | grep "ESSID" \
+                            | awk "{print $4}" \
+                            | awk -F\\\" "{print $2}"'
+                )
+                if None is not cmd:
+                    ret = cmd.read().rstrip("\n")
+
+        except Exception as e:
+            self.log.error("{}".format(e))
+        return ret
+
+    def get_ip(self):
+        """[summary]
+
+        :return: [description]
+        :rtype: [type]
+        """
+        value = []
+        ipaddress = self._get_ifconfig()
+        ssid = self._get_iwconfig()
         ssidsend = self.service.get_ssid()
-        logging.debug("ssidsend : %s ssidRPI : %s", ssidsend, ssid)
+
+        self.log.debug("ssidsend : %s ssidRPI : %s", ssidsend, ssid)
         if (ssid == ssidsend) and ipaddress != "":
             self.service.set_wifichange(True)
         else:
@@ -218,6 +346,11 @@ class GetIPCharacteristic(Characteristic):
         return value
 
     def set_ip_callback(self):
+        """[summary]
+
+        :return: [description]
+        :rtype: [type]
+        """
         if self.notifying:
             value = self.get_ip()
             self.PropertiesChanged(GATT_CHRC_IFACE, {"Value": value}, [])
@@ -225,6 +358,7 @@ class GetIPCharacteristic(Characteristic):
         return self.notifying
 
     def StartNotify(self):
+        """[summary]"""
         if self.notifying:
             return
 
@@ -234,15 +368,31 @@ class GetIPCharacteristic(Characteristic):
         self.add_timeout(NOTIFY_TIMEOUT, self.set_ip_callback)
 
     def StopNotify(self):
+        """[summary]"""
         self.notifying = False
 
     def ReadValue(self, options=None):
+        """[summary]
+
+        :param options: [description], defaults to None
+        :type options: [type], optional
+        :return: [description]
+        :rtype: [type]
+        """
         value = self.get_ip()
 
         return value
 
 
 class JSONDescriptor(Descriptor):
+    """[summary]
+
+    :param Descriptor: [description]
+    :type Descriptor: [type]
+    :return: [description]
+    :rtype: [type]
+    """
+
     JSON_DESCRIPTOR_UUID = "2901"
     JSON_DESCRIPTOR_VALUE = "Send and Receive JSON data"
 
@@ -250,6 +400,13 @@ class JSONDescriptor(Descriptor):
         Descriptor.__init__(self, self.JSON_DESCRIPTOR_UUID, ["read"], characteristic)
 
     def ReadValue(self, options=None):
+        """[summary]
+
+        :param options: [description], defaults to None
+        :type options: [type], optional
+        :return: [description]
+        :rtype: [type]
+        """
         value = []
         desc = self.JSON_DESCRIPTOR_VALUE
 
@@ -260,6 +417,14 @@ class JSONDescriptor(Descriptor):
 
 
 class GetIPDescriptor(Descriptor):
+    """[summary]
+
+    :param Descriptor: [description]
+    :type Descriptor: [type]
+    :return: [description]
+    :rtype: [type]
+    """
+
     GETIP_DESCRIPTOR_UUID = "2901"
     GETIP_DESCRIPTOR_VALUE = "Receive IP of RPI"
 
@@ -267,6 +432,13 @@ class GetIPDescriptor(Descriptor):
         Descriptor.__init__(self, self.GETIP_DESCRIPTOR_UUID, ["read"], characteristic)
 
     def ReadValue(self, options=None):
+        """[summary]
+
+        :param options: [description], defaults to None
+        :type options: [type], optional
+        :return: [description]
+        :rtype: [type]
+        """
         value = []
         desc = self.GETIP_DESCRIPTOR_VALUE
 
