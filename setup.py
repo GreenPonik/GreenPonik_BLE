@@ -26,13 +26,11 @@ here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / "README.md").read_text(encoding="utf-8")
 
 # Load the package's version.py module as a dictionary.
-about = {}
-with open(os.path.join(here, "version.py")) as f:
-    exec(f.read(), about)
+from version import __version__
 
 setup(
     name=NAME,
-    version=about["__version__"],
+    version=__version__,
     author=AUTHOR,
     author_email=EMAIL,
     description=DESCRIPTION,
