@@ -64,6 +64,18 @@ install_ble_server() {
     fi
     wget https://raw.githubusercontent.com/GreenPonik/GreenPonik_BLE/main/supervisor_ble_server.conf
     mv supervisor_ble_server.conf /etc/supervisor/conf.d/supervisor_ble_server.conf
+    wget https://raw.githubusercontent.com/GreenPonik/GreenPonik_BLE/main/main.template.py
+    mkdir -p ble_server
+    mv main.template.py ble_server/main.py
+    REQUIRED_PKG="greenponik-ble"
+    PKG_OK=$(pip3 list|grep -F $REQUIRED_PKG)
+    echo Checking for $REQUIRED_PKG: $PKG_OK
+    if [ "" = "$PKG_OK" ]; then
+        echo "No $REQUIRED_PKG. Setting up $REQUIRED_PKG."
+        pip3 install greenponik-ble
+    else
+        echo "$REQUIRED_PKG already install"
+    fi
     supervisorctl stop all
     supervisorctl reread
     supervisorctl update
