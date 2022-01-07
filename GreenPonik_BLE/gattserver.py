@@ -285,13 +285,13 @@ class GetIPCharacteristic(Characteristic):
         ret = None
         try:
             if is_rpi3aplus:
-                cmd = os.popen(
-                    r'ifconfig wlan0 \
-                    | grep "\<inet\>" \
-                    | awk -F \" \" "{print $2}"'
-                )
-                if None is not cmd:
-                    ret = cmd.read()
+                cmd = [
+                    "ifconfig",
+                    "wlan0",
+                    "| grep -w 'inet' || echo 'None';",
+                ]
+                raw_output = subprocess.check_output(" ".join(cmd), shell=True).decode("utf-8")
+                ret = raw_output.split()[1]
 
         except Exception as e:
             self.log.error("{}".format(e))
@@ -301,15 +301,17 @@ class GetIPCharacteristic(Characteristic):
         ret = None
         try:
             if is_rpi3aplus:
-                cmd = os.popen(
-                    r'iwconfig wlan0 \
-                            | grep "ESSID" \
-                            | awk "{print $4}" \
-                            | awk -F\\\" "{print $2}"'
-                )
-                if None is not cmd:
-                    ret = cmd.read().rstrip("\n")
-
+                cmd = [
+                    "iwconfig",
+                    "wlan0",
+                    "|",
+                    "grep",
+                    "ESSID:",
+                ]
+                raw_output = subprocess.check_output(" ".join(cmd), shell=True).decode("utf-8")
+                self.log.debug("raw_output : %s", raw_output)
+                ret = raw_output.split(":")[1].replace('"', "").replace("/", "").strip()
+                self.log.debug("ret : %s", ret)
         except Exception as e:
             self.log.error("{}".format(e))
         return ret
@@ -326,7 +328,7 @@ class GetIPCharacteristic(Characteristic):
         ssidsend = self.service.get_ssid()
 
         self.log.debug("ssidsend : %s ssidRPI : %s", ssidsend, ssid)
-        if (ssid == ssidsend) and ipaddress != "":
+        if (ssid == ssidsend) and ipaddress != "" and ipaddress != None:
             self.service.set_wifichange(True)
         else:
             self.service.set_wifichange(False)
@@ -335,7 +337,7 @@ class GetIPCharacteristic(Characteristic):
         hname = os.uname()
         data = '{"ssid": "%s","ipadresse": "%s","newwifiisok": "%s","hname": "%s"}' % (
             ssid.strip(),
-            ipaddress.strip(),
+            ipaddress.strip() if None is not ipaddress else "",
             newwifiisok,
             hname[1],
         )
