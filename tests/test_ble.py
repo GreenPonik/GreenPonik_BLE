@@ -130,32 +130,40 @@ class TestBleServer(unittest.TestCase):
         service.ssid = self.fixtures["ssid"]
         service.pwd = self.fixtures["pwd"]
         service.country = self.fixtures["country"]
-        ip_address = "192.168.0.1"
+        ip_address = ["192.168.0.1", "", None]
+        ssid = [service.ssid, ""]
+        newwifiisok = None
 
-        expected_data = (
-            '{"ssid": "%s","ipadresse": "%s","newwifiisok": "%s","hname": "%s"}'
-            % (
-                service.ssid,
-                ip_address,
-                True,
-                os.uname().nodename,
-            )
-        )
+        for ip in ip_address:
+            for myssid in ssid:
+                if ip == "192.168.0.1" and myssid == service.ssid:
+                    newwifiisok = True
+                else:
+                    newwifiisok = False
+                expected_data = (
+                    '{"ssid": "%s","ipadresse": "%s","newwifiisok": "%s","hname": "%s"}'
+                    % (
+                        myssid,
+                        ip if None is not ip else "",
+                        newwifiisok,
+                        os.uname().nodename,
+                    )
+                )
 
-        mock_ifconfig.return_value = ip_address
-        mock_iwconfig.return_value = service.ssid
+                mock_ifconfig.return_value = ip
+                mock_iwconfig.return_value = myssid
 
-        result = None
-        getipc = GetIPCharacteristic(service)
-        result = getipc.get_ip()
+                result = None
+                getipc = GetIPCharacteristic(service)
+                result = getipc.get_ip()
 
-        decoded_result_from_dbus_byte = []
-        for r in result:
-            decoded_result_from_dbus_byte.append(" ".join(str(r)))
-        decoded_result = "".join(s for s in decoded_result_from_dbus_byte)
+                decoded_result_from_dbus_byte = []
+                for r in result:
+                    decoded_result_from_dbus_byte.append(" ".join(str(r)))
+                decoded_result = "".join(s for s in decoded_result_from_dbus_byte)
 
-        self.assertIsNotNone(decoded_result)
-        self.assertEqual(decoded_result, expected_data)
+                self.assertIsNotNone(decoded_result)
+                self.assertEqual(decoded_result, expected_data)
 
     @patch("GreenPonik_BLE.bletools.BleTools.get_bus")
     @patch.object(GetIPCharacteristic, "_get_ifconfig")
