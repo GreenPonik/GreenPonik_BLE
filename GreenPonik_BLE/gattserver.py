@@ -328,7 +328,7 @@ class GetIPCharacteristic(Characteristic):
         ssidsend = self.service.get_ssid()
 
         self.log.debug("ssidsend : %s ssidRPI : %s", ssidsend, ssid)
-        if (ssid == ssidsend) and ipaddress != "" and ipaddress != None:
+        if (ssid == ssidsend) and ipaddress != "" and ipaddress is not None:
             self.service.set_wifichange(True)
         else:
             self.service.set_wifichange(False)
