@@ -309,9 +309,7 @@ class GetIPCharacteristic(Characteristic):
                     "ESSID:",
                 ]
                 raw_output = subprocess.check_output(" ".join(cmd), shell=True).decode("utf-8")
-                self.log.debug("raw_output : %s", raw_output)
                 ret = raw_output.split(":")[1].replace('"', "").replace("/", "").strip()
-                self.log.debug("ret : %s", ret)
         except Exception as e:
             self.log.error("{}".format(e))
         return ret

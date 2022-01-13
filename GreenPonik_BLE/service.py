@@ -30,8 +30,10 @@ except ImportError:
 from GreenPonik_BLE.bletools import BleTools
 import logging
 
+FORMAT = "%(asctime)-15s %(levelname)s %(module)s %(funcName)s \
+        line-%(lineno)d: %(message)s"
 logger = logging.basicConfig(
-    level=logging.DEBUG, filename="/var/log/ble_server.log"
+    level=logging.DEBUG, filename="/var/log/ble_server.log", format=FORMAT
 )
 
 BLUEZ_SERVICE_NAME = "org.bluez"
