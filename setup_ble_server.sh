@@ -62,6 +62,7 @@ install_ble_server() {
     else
         echo "$REQUIRED_PKG already install"
     fi
+    sudo bluetoothctl power on && sudo bluetoothctl pairable off && sudo bluetoothctl discoverable off
     wget https://raw.githubusercontent.com/GreenPonik/GreenPonik_BLE/main/supervisor_ble_server.conf
     mv supervisor_ble_server.conf /etc/supervisor/conf.d/supervisor_ble_server.conf
     wget https://raw.githubusercontent.com/GreenPonik/GreenPonik_BLE/main/main.template.py
