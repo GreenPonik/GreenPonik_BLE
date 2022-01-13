@@ -74,7 +74,7 @@ install_ble_server() {
         echo "No $REQUIRED_PKG. Setting up $REQUIRED_PKG."
         pip3 install greenponik-ble
     else
-        echo "$REQUIRED_PKG already install"
+        pip3 install greenponik-ble --upgrade
     fi
     supervisorctl stop all
     supervisorctl reread
