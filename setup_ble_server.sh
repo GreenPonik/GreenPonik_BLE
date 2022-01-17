@@ -77,6 +77,9 @@ install_ble_server() {
     else
         pip3 install greenponik-ble --upgrade
     fi
+    if [[ 1 -ne $(pip3 list|grep -cF "Adafruit-PlatformDetect") ]]; then
+        pip3 install Adafruit-PlatformDetect
+    fi
     supervisorctl stop all
     supervisorctl reread
     supervisorctl update
