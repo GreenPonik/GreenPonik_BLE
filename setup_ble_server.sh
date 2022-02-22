@@ -62,20 +62,75 @@ install_ble_server() {
     else
         echo "$REQUIRED_PKG already install"
     fi
-    /usr/bin/bluetoothctl power on && /usr/bin/bluetoothctl pairable off && /usr/bin/bluetoothctl discoverable off
-    wget https://raw.githubusercontent.com/GreenPonik/GreenPonik_BLE/main/supervisor_ble_server.conf
-    mv supervisor_ble_server.conf /etc/supervisor/conf.d/supervisor_ble_server.conf
-    wget https://raw.githubusercontent.com/GreenPonik/GreenPonik_BLE/main/main.template.py
-    mkdir -p ble_server
-    mv main.template.py ble_server/main.py
+
+    STATUS="$(systemctl is-active bluetooth)"
+    if [ "${STATUS}" = "active" ]; then
+        bluetoothctl power on && bluetoothctl pairable off && bluetoothctl discoverable off
+    else 
+        i=0
+        while true
+            (( i=i+1 ))
+        do
+            if (( i < 5 ))
+            then
+                systemctl start bluetooth
+                sleep 3
+                continue
+            else
+                bluetoothctl power on && bluetoothctl pairable off && bluetoothctl discoverable off
+                break
+            fi
+        done
+        if [ "${STATUS}" != "active" ]; then
+            echo "bluetooth is not activated"
+            exit 1
+        fi
+    fi
+    wget -q --spider http://google.com
+    if [ $? -eq 0 ]; then
+        wget https://raw.githubusercontent.com/GreenPonik/GreenPonik_BLE/main/supervisor_ble_server.conf
+        FILE=supervisor_ble_server.conf
+        if [ -f "$FILE" ]; then
+            if [ -s "$FILE" ]; then
+                mv supervisor_ble_server.conf /etc/supervisor/conf.d/supervisor_ble_server.conf
+            else
+                echo "supervisor_ble_server.conf is empty"
+                exit 2
+            fi
+        else
+            echo "supervisor_ble_server.conf doesn't exist"
+            exit 3
+        fi
+        wget https://raw.githubusercontent.com/GreenPonik/GreenPonik_BLE/main/main.template.py
+        mkdir -p ble_server
+        FILE=main.template.py
+        if [ -f "$FILE" ]; then
+            if [ -s "$FILE" ]; then
+                mv main.template.py ble_server/main.py
+            else
+                echo "main.template.py is empty"
+                exit 2
+            fi
+        else
+            echo "main.template.py doesn't exist"
+            exit 3
+        fi
+    else
+        echo "Not connected to internet"
+    fi
     REQUIRED_PKG="greenponik-ble"
     PKG_OK=$(pip3 list|grep -F $REQUIRED_PKG)
     echo Checking for $REQUIRED_PKG: $PKG_OK
-    if [ "" = "$PKG_OK" ]; then
-        echo "No $REQUIRED_PKG. Setting up $REQUIRED_PKG."
-        pip3 install greenponik-ble
+    wget -q --spider http://google.com
+    if [ $? -eq 0 ]; then
+        if [ "" = "$PKG_OK" ]; then
+            echo "No $REQUIRED_PKG. Setting up $REQUIRED_PKG."
+            pip3 install greenponik-ble
+        else
+            pip3 install greenponik-ble --upgrade
+        fi
     else
-        pip3 install greenponik-ble --upgrade
+        echo "Not connected to internet"
     fi
     if [[ 1 -ne $(pip3 list|grep -cF "Adafruit-PlatformDetect") ]]; then
         pip3 install Adafruit-PlatformDetect
