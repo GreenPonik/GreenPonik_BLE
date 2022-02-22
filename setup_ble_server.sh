@@ -64,7 +64,6 @@ install_ble_server() {
     fi
 
     STATUS="$(systemctl is-active bluetooth)"
-    STATUS="$(systemctl is-active bluetooth)"
     if [ "${STATUS}" = "active" ]; then
         bluetoothctl power on && bluetoothctl pairable off && bluetoothctl discoverable off
     else 
@@ -87,7 +86,6 @@ install_ble_server() {
             exit 1
         fi
     fi
-    
     wget -q --spider http://google.com
     if [ $? -eq 0 ]; then
         wget https://raw.githubusercontent.com/GreenPonik/GreenPonik_BLE/main/supervisor_ble_server.conf
@@ -120,7 +118,6 @@ install_ble_server() {
     else
         echo "Not connected to internet"
     fi
-
     REQUIRED_PKG="greenponik-ble"
     PKG_OK=$(pip3 list|grep -F $REQUIRED_PKG)
     echo Checking for $REQUIRED_PKG: $PKG_OK
@@ -134,6 +131,9 @@ install_ble_server() {
         fi
     else
         echo "Not connected to internet"
+    fi
+    if [[ 1 -ne $(pip3 list|grep -cF "Adafruit-PlatformDetect") ]]; then
+        pip3 install Adafruit-PlatformDetect
     fi
     supervisorctl stop all
     supervisorctl reread
