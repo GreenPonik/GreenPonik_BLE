@@ -27,8 +27,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest
-        apt-get install libdbus-1-dev libdbus-glib-1-dev libcairo2-dev
-        pip3 install autokey
+        sudo apt install build-essential libpython3-dev libdbus-1-dev
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
