@@ -15,7 +15,7 @@ GREEN='\033[1;32m'
 RED='\033[1;31m'
 
 _welcome() {
-    VERSION="0.0.1"
+    VERSION="0.0.2"
     echo -e "${RASPBERRY}\n"
     echo -e "                                                                                                                                       "
     echo -e " /888888  /8888888  /88888888 /88888888 /88   /88 /8888888   /888888  /88   /88 /888888 /88   /88       /8888888  /88       /88888888  "
@@ -63,7 +63,6 @@ install_ble_server() {
         echo "$REQUIRED_PKG already install"
     fi
 
-    STATUS="$(systemctl is-active bluetooth)"
     STATUS="$(systemctl is-active bluetooth)"
     if [ "${STATUS}" = "active" ]; then
         bluetoothctl power on && bluetoothctl pairable off && bluetoothctl discoverable off
@@ -135,10 +134,35 @@ install_ble_server() {
     else
         echo "Not connected to internet"
     fi
-    supervisorctl stop all
-    supervisorctl reread
-    supervisorctl update
-    supervisorctl start all
+    STATUS="$(systemctl is-active supervisor)"
+    if [ "${STATUS}" = "active" ]; then
+        supervisorctl stop all
+        supervisorctl reread
+        supervisorctl update
+        supervisorctl start all
+    else 
+        i=0
+        while true
+            (( i=i+1 ))
+        do
+            if (( i < 5 ))
+            then
+                systemctl start supervisor
+                sleep 3
+                continue
+            else
+                supervisorctl stop all
+                supervisorctl reread
+                supervisorctl update
+                supervisorctl start all
+                break
+            fi
+        done
+        if [ "${STATUS}" != "active" ]; then
+            echo "supervisor is not activated"
+            exit 1
+        fi
+    fi
 
     echo "finish"
 }
