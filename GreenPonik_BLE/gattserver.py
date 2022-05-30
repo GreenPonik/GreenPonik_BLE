@@ -75,6 +75,14 @@ class JsonService(Service):
     JSON_SVC_UUID = "00000001-9e3e-4800-9fa6-fd34f6571ad7"
 
     def __init__(self, index):
+        f = open("/etc/wpa_supplicant/wpa_supplicant.conf", "r")
+        for x in f:
+            if "ssid=\"" in x:
+                self.ssid = x.split('"')[-2]
+            elif "psk" in x:
+                self.pwd = x.split('"')[-2]
+            elif "country" in x:
+                self.country = x.split('=')[-1]
         self.ssid = "ssid_init"
         self.pwd = "pwd_init"
         self.country = "country_init"
