@@ -82,10 +82,7 @@ class JsonService(Service):
             elif "psk" in x:
                 self.pwd = x.split('"')[-2]
             elif "country" in x:
-                self.country = x.split('=')[-1]
-        self.ssid = "ssid_init"
-        self.pwd = "pwd_init"
-        self.country = "country_init"
+                self.country = x.split('=')[-1].strip('\n')
         self.wifichange = False
         Service.__init__(self, index, self.JSON_SVC_UUID, True)
         self.add_characteristic(JsonCharacteristic(self))
